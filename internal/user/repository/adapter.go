@@ -17,14 +17,14 @@ func NewUserRepository(connection *gohive.Connection) *UserAdapter {
 	return &UserAdapter{Connection: connection}
 }
 
-func (m *UserAdapter) All(ctx context.Context) (*[]model.User, error) {
+func (m *UserAdapter) All(ctx context.Context) ([]model.User, error) {
 	cursor := m.Connection.Cursor()
 	query := "select id, username, email, phone, status, createdDate from users"
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return nil, cursor.Err
 	}
-	var result []model.User
+	var res []model.User
 	var user model.User
 	for cursor.HasMore(ctx) {
 		cursor.FetchOne(ctx, &user.Id, &user.Username, &user.Email, &user.Phone, &user.Status, &user.CreatedDate)
@@ -32,15 +32,15 @@ func (m *UserAdapter) All(ctx context.Context) (*[]model.User, error) {
 			return nil, cursor.Err
 		}
 
-		result = append(result, user)
+		res = append(res, user)
 	}
-	return &result, nil
+	return res, nil
 }
 
 func (m *UserAdapter) Load(ctx context.Context, id string) (*model.User, error) {
 	cursor := m.Connection.Cursor()
 	var user model.User
-	query := fmt.Sprintf("select id, username, email, phone, status , createdDate from users where id = %v ORDER BY id ASC limit 1", id)
+	query := fmt.Sprintf("select id, username, email, phone, status , createdDate from users where id = '%v' order by id asc limit 1", id)
 
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
@@ -58,7 +58,7 @@ func (m *UserAdapter) Load(ctx context.Context, id string) (*model.User, error) 
 
 func (m *UserAdapter) Create(ctx context.Context, user *model.User) (int64, error) {
 	cursor := m.Connection.Cursor()
-	query := fmt.Sprintf("INSERT INTO users VALUES (%v, %v, %v, %v, %v, %v)", user.Id, user.Username, user.Email, user.Phone, user.Status, user.CreatedDate)
+	query := fmt.Sprintf("insert into users values ('%v', '%v', '%v', '%v', '%v', '%v')", user.Id, user.Username, user.Email, user.Phone, user.Status, user.CreatedDate)
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return -1, cursor.Err
@@ -68,7 +68,7 @@ func (m *UserAdapter) Create(ctx context.Context, user *model.User) (int64, erro
 
 func (m *UserAdapter) Update(ctx context.Context, user *model.User) (int64, error) {
 	cursor := m.Connection.Cursor()
-	query := fmt.Sprintf("UPDATE users SET username = %v, email = %v, phone = %v WHERE id = %v", user.Username, user.Email, user.Phone, user.Id)
+	query := fmt.Sprintf("update users set username = '%v', email = '%v', phone = '%v' where id = '%v'", user.Username, user.Email, user.Phone, user.Id)
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return -1, cursor.Err
@@ -78,7 +78,7 @@ func (m *UserAdapter) Update(ctx context.Context, user *model.User) (int64, erro
 
 func (m *UserAdapter) Delete(ctx context.Context, id string) (int64, error) {
 	cursor := m.Connection.Cursor()
-	query := fmt.Sprintf("DELETE FROM users WHERE id = %v", id)
+	query := fmt.Sprintf("delete from users where id = '%v'", id)
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return -1, cursor.Err
