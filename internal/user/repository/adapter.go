@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/beltran/gohive"
+	h "github.com/core-go/hive"
 
 	"go-service/internal/user/model"
 )
@@ -19,7 +20,7 @@ func NewUserRepository(connection *gohive.Connection) *UserAdapter {
 
 func (m *UserAdapter) All(ctx context.Context) ([]model.User, error) {
 	cursor := m.Connection.Cursor()
-	query := "select id, username, email, phone, status, createdDate from users"
+	query := "select id, username, email, phone from users"
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return nil, cursor.Err
@@ -27,7 +28,7 @@ func (m *UserAdapter) All(ctx context.Context) ([]model.User, error) {
 	var res []model.User
 	var user model.User
 	for cursor.HasMore(ctx) {
-		cursor.FetchOne(ctx, &user.Id, &user.Username, &user.Email, &user.Phone, &user.Status, &user.CreatedDate)
+		cursor.FetchOne(ctx, &user.Id, &user.Username, &user.Email, &user.Phone)
 		if cursor.Err != nil {
 			return nil, cursor.Err
 		}
@@ -40,14 +41,14 @@ func (m *UserAdapter) All(ctx context.Context) ([]model.User, error) {
 func (m *UserAdapter) Load(ctx context.Context, id string) (*model.User, error) {
 	cursor := m.Connection.Cursor()
 	var user model.User
-	query := fmt.Sprintf("select id, username, email, phone, status , createdDate from users where id = '%v' order by id asc limit 1", id)
+	query := fmt.Sprintf("select id, username, email, phone from users where id = '%s' order by id asc limit 1", h.Escape(id))
 
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return nil, cursor.Err
 	}
 	for cursor.HasMore(ctx) {
-		cursor.FetchOne(ctx, &user.Id, &user.Username, &user.Email, &user.Phone, &user.Status, &user.CreatedDate)
+		cursor.FetchOne(ctx, &user.Id, &user.Username, &user.Email, &user.Phone)
 		if cursor.Err != nil {
 			return nil, cursor.Err
 		}
@@ -58,7 +59,7 @@ func (m *UserAdapter) Load(ctx context.Context, id string) (*model.User, error) 
 
 func (m *UserAdapter) Create(ctx context.Context, user *model.User) (int64, error) {
 	cursor := m.Connection.Cursor()
-	query := fmt.Sprintf("insert into users values ('%v', '%v', '%v', '%v', '%v', '%v')", user.Id, user.Username, user.Email, user.Phone, user.Status, user.CreatedDate)
+	query := fmt.Sprintf("insert into users(id, username, email, phone, date_of_birth) values ('%s', '%s', %s, '%s', %s)", h.Escape(user.Id), h.Escape(user.Username), h.GetString(user.Email), h.Escape(user.Phone), h.GetDateTime(user.DateOfBirth))
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return -1, cursor.Err
@@ -68,7 +69,7 @@ func (m *UserAdapter) Create(ctx context.Context, user *model.User) (int64, erro
 
 func (m *UserAdapter) Update(ctx context.Context, user *model.User) (int64, error) {
 	cursor := m.Connection.Cursor()
-	query := fmt.Sprintf("update users set username = '%v', email = '%v', phone = '%v' where id = '%v'", user.Username, user.Email, user.Phone, user.Id)
+	query := fmt.Sprintf("update users set username = '%s', email = %s, phone = '%s', date_of_birth= %s where id = '%s'", h.Escape(user.Username), h.GetString(user.Email), h.Escape(user.Phone), h.GetDateTime(user.DateOfBirth), h.Escape(user.Id))
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return -1, cursor.Err
@@ -78,7 +79,7 @@ func (m *UserAdapter) Update(ctx context.Context, user *model.User) (int64, erro
 
 func (m *UserAdapter) Delete(ctx context.Context, id string) (int64, error) {
 	cursor := m.Connection.Cursor()
-	query := fmt.Sprintf("delete from users where id = '%v'", id)
+	query := fmt.Sprintf("delete from users where id = '%s'", h.Escape(id))
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return -1, cursor.Err
