@@ -20,18 +20,21 @@ func NewUserRepository(connection *gohive.Connection) *UserAdapter {
 
 func (m *UserAdapter) All(ctx context.Context) ([]model.User, error) {
 	cursor := m.Connection.Cursor()
-	query := "select id, username, email, phone from users"
+	query := "select id, username, email, phone, date_of_birth from users"
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return nil, cursor.Err
 	}
 	var res []model.User
-	var user model.User
+
 	for cursor.HasMore(ctx) {
-		cursor.FetchOne(ctx, &user.Id, &user.Username, &user.Email, &user.Phone)
+		var user model.User
+		var dob string
+		cursor.FetchOne(ctx, &user.Id, &user.Username, &user.Email, &user.Phone, &dob)
 		if cursor.Err != nil {
 			return nil, cursor.Err
 		}
+		user.DateOfBirth = h.GetTime(dob)
 
 		res = append(res, user)
 	}
@@ -40,18 +43,21 @@ func (m *UserAdapter) All(ctx context.Context) ([]model.User, error) {
 
 func (m *UserAdapter) Load(ctx context.Context, id string) (*model.User, error) {
 	cursor := m.Connection.Cursor()
-	var user model.User
-	query := fmt.Sprintf("select id, username, email, phone from users where id = '%s' order by id asc limit 1", h.Escape(id))
+
+	query := fmt.Sprintf("select id, username, email, phone, date_of_birth from users where id = '%s' order by id asc limit 1", h.Escape(id))
 
 	cursor.Exec(ctx, query)
 	if cursor.Err != nil {
 		return nil, cursor.Err
 	}
 	for cursor.HasMore(ctx) {
-		cursor.FetchOne(ctx, &user.Id, &user.Username, &user.Email, &user.Phone)
+		var user model.User
+		var dob string
+		cursor.FetchOne(ctx, &user.Id, &user.Username, &user.Email, &user.Phone, &dob)
 		if cursor.Err != nil {
 			return nil, cursor.Err
 		}
+		user.DateOfBirth = h.GetTime(dob)
 		return &user, nil
 	}
 	return nil, nil
