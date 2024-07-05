@@ -21,15 +21,18 @@ type UserHandler struct {
 	Validate    func(context.Context, interface{}) ([]core.ErrorMessage, error)
 	LogError    func(context.Context, string, ...map[string]interface{})
 	search      func(ctx context.Context, m interface{}, results interface{}, limit int64, offset int64) (int64, error)
+	jsonMap     map[string]int
 	paramIndex  map[string]int
 	filterIndex int
 }
 
 func NewUserHandler(search func(ctx context.Context, m interface{}, results interface{}, limit int64, offset int64) (int64, error), service service.UserService, validate func(context.Context, interface{}) ([]core.ErrorMessage, error), logError func(context.Context, string, ...map[string]interface{})) *UserHandler {
+	userType := reflect.TypeOf(model.User{})
+	_, jsonMap, _ := core.BuildMapField(userType)
 	filterType := reflect.TypeOf(model.UserFilter{})
 	paramIndex := s.BuildParamIndex(filterType)
 	filterIndex := s.FindFilterIndex(filterType)
-	return &UserHandler{service: service, Validate: validate, LogError: logError, search: search, paramIndex: paramIndex, filterIndex: filterIndex}
+	return &UserHandler{service: service, Validate: validate, LogError: logError, search: search, jsonMap: jsonMap, paramIndex: paramIndex, filterIndex: filterIndex}
 }
 
 func (h *UserHandler) All(w http.ResponseWriter, r *http.Request) {
@@ -125,6 +128,55 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if res > 0 {
 		JSON(w, http.StatusOK, user)
+	} else if res == 0 {
+		JSON(w, http.StatusNotFound, res)
+	} else {
+		JSON(w, http.StatusConflict, res)
+	}
+}
+func (h *UserHandler) Patch(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	if len(id) == 0 {
+		http.Error(w, "Id cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	var user model.User
+	body, er1 := core.BuildMapAndStruct(r, &user)
+	if er1 != nil {
+		http.Error(w, er1.Error(), http.StatusInternalServerError)
+		return
+	}
+	if len(user.Id) == 0 {
+		user.Id = id
+	} else if id != user.Id {
+		http.Error(w, "Id not match", http.StatusBadRequest)
+		return
+	}
+	json, er2 := core.BodyToJsonMap(r, user, body, []string{"id"}, h.jsonMap)
+	if er2 != nil {
+		http.Error(w, er2.Error(), http.StatusInternalServerError)
+		return
+	}
+	r = r.WithContext(context.WithValue(r.Context(), "method", "patch"))
+	errors, er3 := h.Validate(r.Context(), &user)
+	if er3 != nil {
+		h.LogError(r.Context(), er3.Error(), MakeMap(user))
+		http.Error(w, InternalServerError, http.StatusInternalServerError)
+		return
+	}
+	if len(errors) > 0 {
+		JSON(w, http.StatusUnprocessableEntity, errors)
+		return
+	}
+	res, er4 := h.service.Patch(r.Context(), json)
+	if er4 != nil {
+		h.LogError(r.Context(), er4.Error(), MakeMap(user))
+		http.Error(w, InternalServerError, http.StatusInternalServerError)
+		return
+	}
+	if res > 0 {
+		JSON(w, http.StatusOK, json)
 	} else if res == 0 {
 		JSON(w, http.StatusNotFound, res)
 	} else {

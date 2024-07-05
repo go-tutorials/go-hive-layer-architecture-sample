@@ -12,7 +12,7 @@ import (
 
 	"go-service/internal/user/handler"
 	"go-service/internal/user/model"
-	"go-service/internal/user/repository"
+	"go-service/internal/user/repository/adapter"
 	"go-service/internal/user/service"
 )
 
@@ -22,6 +22,7 @@ type UserTransport interface {
 	Load(w http.ResponseWriter, r *http.Request)
 	Create(w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request)
+	Patch(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
 }
 
@@ -37,7 +38,7 @@ func NewUserHandler(connection *gohive.Connection, logError func(context.Context
 	if err != nil {
 		return nil, err
 	}
-	userRepository := repository.NewUserRepository(connection)
+	userRepository := adapter.NewUserRepository(connection)
 	userService := service.NewUserService(userRepository)
 	userHandler := handler.NewUserHandler(userSearchBuilder.Search, userService, validator.Validate, logError)
 	return userHandler, nil
