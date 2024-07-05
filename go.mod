@@ -1,26 +1,27 @@
 module go-service
 
-go 1.19
+go 1.17
 
 require (
 	github.com/beltran/gohive v1.7.0
 	github.com/core-go/config v1.0.1
 	github.com/core-go/core v0.6.5
-	github.com/core-go/hive v0.3.3
-	github.com/core-go/log v1.0.2
-	github.com/core-go/search v1.0.2
+	github.com/core-go/health v1.0.0
+	github.com/core-go/hive v0.3.5
+	github.com/core-go/log v1.0.5
+	github.com/core-go/search v1.0.3
 	github.com/gorilla/mux v1.8.1
 )
 
 require (
-	github.com/apache/thrift v0.18.1 // indirect
+	github.com/apache/thrift v0.19.0 // indirect
 	github.com/beltran/gosasl v0.0.0-20200715011608-d5475aebb293 // indirect
 	github.com/beltran/gssapi v0.0.0-20200324152954-d86554db4bab // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.4 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.21.0 // indirect
+	github.com/go-playground/validator/v10 v10.22.0 // indirect
 	github.com/go-zookeeper/zk v1.0.3 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect

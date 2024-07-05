@@ -4,13 +4,16 @@ import (
 	"context"
 
 	"github.com/beltran/gohive"
+	"github.com/core-go/health"
+	h "github.com/core-go/hive/health"
 	"github.com/core-go/log"
 
 	"go-service/internal/user"
 )
 
 type ApplicationContext struct {
-	User user.UserTransport
+	Health *health.Handler
+	User   user.UserTransport
 }
 
 func NewApp(ctx context.Context, cfg Config) (*ApplicationContext, error) {
@@ -28,7 +31,11 @@ func NewApp(ctx context.Context, cfg Config) (*ApplicationContext, error) {
 		return nil, err
 	}
 
+	hiveChecker := h.NewHealthChecker(connection)
+	healthHandler := health.NewHandler(hiveChecker)
+
 	return &ApplicationContext{
-		User: userHandler,
+		Health: healthHandler,
+		User:   userHandler,
 	}, nil
 }

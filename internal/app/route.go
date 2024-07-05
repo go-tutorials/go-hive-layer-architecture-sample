@@ -19,7 +19,7 @@ func Route(ctx context.Context, r *mux.Router, cfg Config) error {
 		return err
 	}
 
-	// r.HandleFunc("/health", app.Health.Check).Methods(GET)
+	r.HandleFunc("/health", app.Health.Check).Methods(GET)
 
 	user := "/users"
 	r.HandleFunc(user+"/search", app.User.Search).Methods(GET, POST)
