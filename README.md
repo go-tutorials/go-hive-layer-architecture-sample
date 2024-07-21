@@ -1,1 +1,1 @@
-# go-hive-layer-architecture-sample
+# go-hive-sample

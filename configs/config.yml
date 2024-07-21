@@ -1,5 +1,5 @@
 server:
-  name: go-hive-layer-architecture-sample
+  name: go-hive-sample
   port: 8080
   
 hive:
